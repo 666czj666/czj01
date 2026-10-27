@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">自律</string>
+    <string name="m1_title">环境搭建完成</string>
+    <string name="m1_subtitle">工具链已跑通，可以开始 M2 了。</string>
+
+    <string name="accessibility_service_description">自律需要用无障碍服务来知道你当前打开了哪个应用，从而在锁机时段挡住白名单以外的应用。桌面、系统设置、输入法、电话、短信永远不会被拦。</string>
+    <string name="accessibility_service_summary">锁机时段挡住白名单以外的应用</string>
+</resources>

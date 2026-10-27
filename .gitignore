@@ -1,0 +1,59 @@
+# ---------------------------------------------------------------------------
+# 「自律」安卓 App —— 版本控制排除规则
+# ---------------------------------------------------------------------------
+
+# 工具链与缓存（合计约 5.2 GB，绝不入库）
+.toolchain/
+.gradle-home/
+.cache/
+.research/
+
+# 构建产物
+build/
+*/build/
+android/build/
+android/app/build/
+android/.gradle/
+.gradle/
+
+# JVM 崩溃转储（早期 Gradle worker 崩溃留下的，纯垃圾）
+hs_err_pid*.log
+replay_pid*.log
+*.hprof
+java_pid*.hprof
+
+# ---------------------------------------------------------------------------
+# 签名凭据 —— 绝对不要提交
+#
+# 已与用户确认：签名库由用户单独备份，不进版本历史。
+# ⚠️ 若日后丢失 android/keystore/zilv-release.jks，将无法对已安装的 App
+#    做覆盖升级，只能卸载重装（数据全丢）。请另行备份该文件。
+# ---------------------------------------------------------------------------
+keystore.properties
+*.jks
+*.keystore
+
+# 交付目录：只保留已签名的 release 版，debug 版可从源码重建
+# 用通配符匹配带版本号的文件名，升级版本时不用再改这里
+dist/*
+!dist/自律-*-release.apk
+
+# IDE
+.idea/
+*.iml
+local.properties
+captures/
+
+# 运行时数据备份（**只忽略仓库根目录下的 backup/**）
+#
+# ⚠️ 这里原先写的是 `backup/`，而 gitignore 里不带前导斜杠的模式会匹配
+# **任意层级**的同名目录 —— 结果 `domain/backup/`、`ui/backup/`、
+# `test/.../domain/backup/` 三个**源码目录**被静默排除在版本控制之外，
+# 整个备份功能从未被提交过（v2.4 才发现）。
+# 改成 `/backup/` 只匹配根目录，源码目录恢复正常跟踪。
+/backup/
+
+# 系统垃圾
+Thumbs.db
+Desktop.ini
+.DS_Store

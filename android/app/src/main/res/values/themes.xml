@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      纯 Compose 项目，不需要 AppCompat / Material Components 依赖，
+      因此直接继承系统 Material 主题。
+    -->
+    <style name="Theme.Zilv" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/window_background</item>
+    </style>
+</resources>

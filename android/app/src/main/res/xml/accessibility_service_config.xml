@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  无障碍服务配置（PRD §3.3 L1）。
+
+  关键点：
+  - accessibilityEventTypes 只要窗口状态变化，不需要内容变化
+  - accessibilityFlags 必须含 flagRetrieveInteractiveWindows，
+    否则拿不到 AccessibilityWindowInfo，也就无法做"只拦应用窗口"的判定
+  - canRetrieveWindowContent=false：M4 不需要读取页面内容，
+    保持最小权限面（设置页软拦截方案已在 PRD 定稿时移除）
+-->
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:accessibilityEventTypes="typeWindowStateChanged|typeWindowsChanged"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:accessibilityFlags="flagDefault|flagRetrieveInteractiveWindows"
+    android:canRetrieveWindowContent="false"
+    android:notificationTimeout="100"
+    android:description="@string/accessibility_service_description"
+    android:summary="@string/accessibility_service_summary" />

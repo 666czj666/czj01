@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!--
+      权限声明说明（重要）
+
+      这里**一次性声明了完整 App 所需的权限**，而不是按里程碑逐个加。原因：
+      「权限向导」本身是 M3 的交付物，它必须能引导用户走完全部 9 步；
+      如果权限尚未声明，向导里对应项的跳转与检测都是无效的。
+
+      声明权限 ≠ 启用功能。真正使用这些权限的功能仍按里程碑落地：
+        M3  通知 / 前台服务 / 精确闹钟 / 电池优化
+        M4  无障碍 / 悬浮窗
+        M5  前台定位
+        M6  通知使用权
+
+      tools/verify-apk.ps1 仍按里程碑做**精确集合匹配**，
+      因此任何库偷偷引入的额外权限都会被立刻发现。
+    -->
+
+    <!-- M3：前台服务与到点预警 -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+
+    <!--
+      M4：白名单选择器需要枚举已安装应用。
+      Android 11+ 的包可见性限制下，不声明它就只能看到自己与少数几个包，
+      「白名单制」也就无法配置。这是产品功能的硬需求，属**有意识的选择**。
+      （其余无关权限仍由 tools/verify-apk.ps1 逐条禁止。）
+    -->
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"
+        tools:ignore="QueryAllPackagesPermission" />
+
+    <!-- M4：拦截引擎 -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
+    <!-- M5：打卡定位。刻意**不声明** ACCESS_BACKGROUND_LOCATION（PRD 定位方案 A） -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+    <application
+        android:name=".ZilvApp"
+        android:allowBackup="false"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:label="@string/app_name"
+        android:supportsRtl="false"
+        android:theme="@style/Theme.Zilv">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.Zilv">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!--
+          M3 保活层：常驻前台服务。
+          Android 14 起必须声明 foregroundServiceType；
+          specialUse 还需额外声明 subtype 属性。
+        -->
+        <service
+            android:name=".service.LockForegroundService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="self_discipline_lock_scheduler" />
+        </service>
+
+        <!-- M3 开机恢复：窗口内未打卡则立即回到拦截态 -->
+        <receiver
+            android:name=".service.BootReceiver"
+            android:exported="false"
+            android:enabled="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
+        <!--
+          M4 拦截引擎。
+          BIND_ACCESSIBILITY_SERVICE 声明在 service 上（不是 uses-permission），
+          这是无障碍服务能被系统绑定的必要条件。
+        -->
+        <service
+            android:name=".service.LockAccessibilityService"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_service_config" />
+        </service>
+
+        <!--
+          M6 通知脱敏。
+          BIND_NOTIFICATION_LISTENER_SERVICE 同样声明在 service 上
+          （不是 uses-permission），这是系统能绑定监听器的必要条件。
+        -->
+        <service
+            android:name=".service.LockNotificationListenerService"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
+
+        <!--
+          M3 精确闹钟到点入口。
+          由 AlarmScheduler 用**显式组件**的 PendingIntent 拉起，
+          因此不需要 intent-filter。
+        -->
+        <receiver
+            android:name=".service.AlarmReceiver"
+            android:exported="false" />
+
+    </application>
+
+</manifest>
